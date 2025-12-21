@@ -1,0 +1,9 @@
+data/Word/Word_3d/Abdomen_Tr_volumes/
+data/Word/Word_3d/Abdomen_Val_volumes/
+data/Word/Word_3d/imagesTs/
+data/Word/WORD-V0.1.0-Admin_cropWL
+model/
+*__pycache__/
+*.pyc
+pymic/
+result/
