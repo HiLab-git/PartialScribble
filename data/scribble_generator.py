@@ -217,7 +217,7 @@ def scrible_2d(label, iteration=[4, 10]):
         else:
             slic = lab[i]
         sk_slice = skeletonize(slic, method='lee')
-        sk_slice = np.asarray((sk_slice == 255), dtype=np.int32)
+        # sk_slice = np.asarray((sk_slice == 255), dtype=np.int32)
         skeleton_map[i] = sk_slice
     return skeleton_map
 
