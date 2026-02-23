@@ -1,1 +1,1 @@
-from .mTDNetIdpSk_3D import mTDNetIdpSk_3D
+from .TDNet_3D import TDNet_3D

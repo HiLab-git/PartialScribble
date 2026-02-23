@@ -1,5 +1,22 @@
 # PS-Seg
-Official code for: PS-Seg: Learning from Partial Scribbles for 3D Multiple Abdominal Organ Segmentation
+The official code for PS-Seg, accoding to the following paper:
+
+* Meng Han, Xiaochuan Ma, Xiangde Luo, Wenjun Liao, Shichuan Zhang, Shaoting Zhang,  Guotai Wang, 
+[PS-seg: Learning from partial scribbles for 3D multiple abdominal organ segmentation.][paper_link] Neurocomputing, 672, April (2026): 132837. 
+
+[paper_link]: https://www.sciencedirect.com/science/article/pii/S0925231226002341
+
+BibTeX entry:
+
+    @article{han2026ps_seg,
+    author = {Meng Han and Xiaochuan Ma and Xiangde Luo and Wenjun Liao and Shichuan Zhang and Shaoting Zhang and  Guotai Wang},
+    title = {{PS-seg: Learning from partial scribbles for 3D multiple abdominal organ segmentation}},
+    year = {2026},
+    url = {https://doi.org/10.1016/j.neucom.2026.132837},
+    journal = {Neurocomputing},
+    volume = {672},
+    pages = {132837},
+    }
 
 ### Overall Framework
 The overall framework of PS-Seg：
@@ -40,7 +57,9 @@ python data/image2h5.py
 
 ### Step 1: Training 
 The configurations including dataset, network, optimizer and hyper-parameters are contained in the configure file
-`config/psseg_word.cfg`. Train the PS-Seg model by running:
+`config/psseg_word.cfg`. PS-Seg needs a multi-decoder network, and it is defined in `networks/TDNet_3D.py`. A reimplementatin of this network has also been provided in PyMIC. 
+
+Train the PS-Seg model by running:
 ```sh
 python run.py train config/psseg_word.cfg
 ```

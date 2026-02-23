@@ -2,13 +2,14 @@
 '''`
 Code for the following paper:
   https://www.sciencedirect.com/science/article/abs/pii/S1361841524001993?dgcid
-    @article{han2024dmsps,
-    title={DMSPS: Dynamically mixed soft pseudo-label supervision for scribble-supervised medical image segmentation},
-    author={Han, Meng and Luo, Xiangde and Xie, Xiangjiang and Liao, Wenjun and Zhang, Shichuan and Song, Tao and Wang, Guotai and Zhang, Shaoting},
-    journal={Medical Image Analysis},
-    pages={103274},
-    year={2024},
-    publisher={Elsevier}
+    @article{han2026ps_seg,
+    author = {Meng Han and Xiaochuan Ma and Xiangde Luo and Wenjun Liao and Shichuan Zhang and Shaoting Zhang and  Guotai Wang},
+    title = {{PS-seg: Learning from partial scribbles for 3D multiple abdominal organ segmentation}},
+    year = {2026},
+    url = {https://doi.org/10.1016/j.neucom.2026.132837},
+    journal = {Neurocomputing},
+    volume = {672},
+    pages = {132837},
 }
 
 '''
@@ -18,10 +19,9 @@ import argparse
 import logging
 import os
 import sys
-from networks import mTDNetIdpSk_3D
+from networks import TDNet_3D
 from pymic.util.parse_config import *
 from pymic.net_run.weak_sup import  WSLPSSEG
-
 
 
 def main():
@@ -52,7 +52,7 @@ def main():
     logging_config(config)
 
     agent  = WSLPSSEG(config, args.stage)
-    net_dict  = {"mTDNetIdpSk_3D": mTDNetIdpSk_3D}
+    net_dict  = {"TDNet_3D": TDNet_3D}
     agent.set_net_dict(net_dict)
     agent.run()
 

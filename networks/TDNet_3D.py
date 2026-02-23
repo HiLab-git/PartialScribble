@@ -5,15 +5,12 @@ import numpy as np
 import random
 import os
 import sys
-BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__))) #当前程序上上一级目录
-sys.path.append(BASE_DIR) #添加环境变量
 from networks.networks_other import init_weights
 from torch.distributions.uniform import Uniform
 
-class ConvBlock3d(nn.Module): #dropout+dilation，其实和util文件里的UnetConv3_dropout一样
+class ConvBlock3d(nn.Module):
     """
-    is_batchnorm:是否使用IN进行归一化
-    结果: conv3d+(IN)+ReLU+[dropout]+Conv3d+(IN)+ReLU
+    conv3d+(IN)+ReLU+[dropout]+Conv3d+(IN)+ReLU
     """
     def __init__(self, in_size, out_size, dropout_p, is_batchnorm, kernel_size=(3,3,3), \
         padding_size=(1,1,1), stride=(1,1,1), dilation = (1,1,1), init_type = 'kaiming'):# d x h x w
@@ -50,19 +47,19 @@ class Unet_Upblock3d(nn.Module):#加了dropout
         super(Unet_Upblock3d, self).__init__()
         self.conv = ConvBlock3d(in_size + out_size, out_size, dropout_p, is_batchnorm, kernel_size, 
                                 padding_size, stride, dilation) 
-        self.up = nn.Upsample(scale_factor=(2, 2, 2), mode='trilinear') #scale_factor是因为maxpool
+        self.up = nn.Upsample(scale_factor=(2, 2, 2), mode='trilinear') 
 
         # initialise the blocks
         for m in self.children():
-            if m.__class__.__name__.find('ConvBlock3d') != -1: continue #查看每个submodule的类名，当前类名中有xxx的话，就continue
+            if m.__class__.__name__.find('ConvBlock3d') != -1: continue 
             init_weights(m, init_type = init_type)
 
-    def forward(self, inputs1, inputs2):#inputs1是跳跃连接，inputs2是上采样
+    def forward(self, inputs1, inputs2):
         outputs2 = self.up(inputs2)
-        offset = outputs2.size()[2] - inputs1.size()[2]#这里是害怕up后的inputs2与input1的DxHxW不一致
+        offset = outputs2.size()[2] - inputs1.size()[2]
         padding = 2 * [offset // 2, offset // 2, 0]
-        outputs1 = F.pad(inputs1, padding)#reshape 跳跃连接的output
-        if np.shape(outputs1)!=np.shape(outputs2):#outputs2是decoder上采样的结果，outputs1是encoder下采样的结果
+        outputs1 = F.pad(inputs1, padding)
+        if np.shape(outputs1)!=np.shape(outputs2):
             _,_,d,h,w = outputs2.shape
             outputs1 = F.interpolate(outputs1, size=(d, h, w), mode='trilinear', align_corners=True)    
         x = torch.cat([outputs1, outputs2], 1)
@@ -74,7 +71,7 @@ class Encoder(nn.Module):
         self.params = params
         self.in_channels = self.params['in_chns'] 
         self.feature_scale = self.params['feature_scale']        
-        self.is_batchnorm = self.params['is_batchnorm'] # 默认True,IN
+        self.is_batchnorm = self.params['is_batchnorm'] # Default True,IN
         self.dropout_p = self.params['dropout'] #[0.05, 0.1, 0.2, 0.3, 0.5]
         self.init_type = self.params['init_type']  #select mode: kaiming (default), xavier, normal, orthogonal
     
@@ -141,9 +138,7 @@ def FeatureDropout_3D(x):
     x = x.mul(drop_mask)
     return x
 
-
-######################################################################
-## for conv1x1, denoted as m       
+     
 class Decoder_dilDrop_dp_multiscale(nn.Module): 
     def __init__(self, params):
         super(Decoder_dilDrop_dp_multiscale, self).__init__()
@@ -199,13 +194,9 @@ class Decoder_dilDrop_dp_multiscale(nn.Module):
 
         return output, out_2, out_3, out_4
 
-class mTDNetIdpSk_3D(nn.Module): # m means using conv1x1,Sk means using same kernel
-    # def __init__(self, in_channels=1, feature_scale=4, n_classes=8, 
-    #              is_batchnorm=True, is_decoderRandomDropout=True, 
-    #              is_sameInit = False, is_deepSupervision = False, same_kernel_size=1):
-    
+class TDNet_3D(nn.Module): # m means using conv1x1,Sk means using same kernel
     def __init__(self, params):
-        super(mTDNetIdpSk_3D, self).__init__()
+        super(TDNet_3D, self).__init__()
         
         in_channels = params['in_chns']
         n_classes = params['class_num']
@@ -252,17 +243,12 @@ class mTDNetIdpSk_3D(nn.Module): # m means using conv1x1,Sk means using same ker
         self.aux_decoder2 = Decoder_dilDrop_dp_multiscale(params_deaux2) 
         
     def forward(self, x): 
-        # pLS论文里提到：
-        # We added the dropout layer (ratio=0.5) before each
-        # conv-block of the auxiliary decoder to introduce perturbations
         """
         here, we added random dropout before each conv-block of the auxiliary decoder"""
         features = self.encoder(x)
         main_seg, main_embedding1, main_embedding2, main_embedding3 = self.main_decoder(features)
 
         if not self.is_decoderRandomDropout:
-            # aux1_feature = features
-            # aux2_feature = features
             aux1_feature = [Dropout_random(i) for i in features]
             aux2_feature = [Dropout_random(i) for i in features]
         else:
@@ -271,9 +257,37 @@ class mTDNetIdpSk_3D(nn.Module): # m means using conv1x1,Sk means using same ker
       
         aux1_seg, aux1_embedding1, aux1_embedding2, aux1_embedding3 = self.aux_decoder1(aux1_feature)      
         aux2_seg, aux2_embedding1, aux2_embedding2, aux2_embedding3 = self.aux_decoder2(aux2_feature)
-        if self.is_deepSupervision: 
+        # if self.is_deepSupervision: 
+        if self.training:
             return [main_seg, aux1_seg, aux2_seg], [main_embedding1, aux1_embedding1, aux2_embedding1],\
                [main_embedding2, aux1_embedding2, aux2_embedding2], [main_embedding3, aux1_embedding3, aux2_embedding3]
         else: 
-            return main_seg, aux1_seg, aux2_seg
+            return main_seg #, aux1_seg, aux2_seg
+
+if __name__ == "__main__":
+    params = {'in_chns':4,
+              'class_num': 2,
+              'up_mode': 2}
+    Net = TDNet_3D(params)
+    Net = Net.double()
+
+    x  = np.random.rand(4, 4, 64, 80, 80)
+    xt = torch.from_numpy(x)
+    xt = torch.tensor(xt)
     
+    out_list, f1_list, f2_list, f3_list = Net(xt)
+    for y in out_list:
+        y = y.detach().numpy()
+        print(y.shape)
+
+    for y in f1_list:
+        y = y.detach().numpy()
+        print(y.shape)
+
+    for y in f2_list:
+        y = y.detach().numpy()
+        print(y.shape)
+
+    for y in f3_list:
+        y = y.detach().numpy()
+        print(y.shape)    
