@@ -89,6 +89,7 @@ def Load_LabelConvert_abdomenWORD(label_path=None):
     for i in range(9,17):
         #set some organs' labels to 0[background]
         new_label[new_label == i] = 0
+    new_label[new_label == 255] = 8
     return new_label
 
 def get_3d_bounding_box(seg_np = None):
@@ -97,9 +98,16 @@ def get_3d_bounding_box(seg_np = None):
     d_min, d_max = d_idx.min(), d_idx.max()
     h_min, h_max = h_idx.min(), h_idx.max()
     w_min, w_max = w_idx.min(), w_idx.max()
-    d_min, d_max = max(0, d_min - 20), min(D, d_max + 20)
-    h_min, h_max = max(0, h_min - 20), min(H, h_max + 20)
-    w_min, w_max = max(0, w_min - 20), min(W, w_max + 20)
+    print(D, H, W)
+    print(d_min, d_max, h_min, h_max, w_min, w_max)
+    d_min = d_min - 20 if d_min - 20 > 0 else 0
+    d_max = d_max + 20 if d_max + 20 < D else D
+    h_min = h_min - 20 if h_min - 20 > 0 else 0 
+    h_max = h_max + 20 if h_max + 20 < H else H 
+    w_min = w_min - 20 if w_min - 20 > 0 else 0 
+    w_max = w_max + 20 if w_max + 20 < W else W 
+    # h_min, h_max = max(0, h_min - 20), min(H, h_max + 20)
+    # w_min, w_max = max(0, w_min - 20), min(W, w_max + 20)
     idx_min, idx_max = [d_min, h_min, w_min], [d_max, h_max, w_max]
     return idx_min, idx_max
 
@@ -109,11 +117,10 @@ def cropW_single_image(img_name, input_img_dir, idx_min, idx_max, output_img_dir
     img = sitk.GetArrayFromImage(img_obj) #可以看成是np型
     if convert == True:
         img = Load_LabelConvert_abdomenWORD(label_path=img_name_full)
-        print("convert successfully")
 
     img_crop = img[idx_min[0]:idx_max[0], idx_min[1]:idx_max[1], idx_min[2]:idx_max[2]]
 
-    #adjust the window level and width only on "images"
+    # adjust the window level and width only on "images"
     if "image" in input_img_dir:
         thred_lower, thred_upper = -150, 250
         img_crop[img_crop < thred_lower] = thred_lower
@@ -125,11 +132,13 @@ def cropW_single_image(img_name, input_img_dir, idx_min, idx_max, output_img_dir
     img_crop_obj.SetOrigin(img_obj.GetOrigin())
     img_crop_obj.SetDirection(img_obj.GetDirection())
     img_out_name = output_img_dir + "/" + img_name 
+    if("scribble" in img_out_name):
+        print("output name", img_out_name)
     sitk.WriteImage(img_crop_obj, img_out_name)
 
-def cropW_3d_images_WORD(flag ="train"):
-    input_root = data_root
-    output_root = input_root + "_cropW" 
+def cropW_3d_images_WORD(input_root, output_root, flag ="train"):
+    # input_root = data_root
+    # output_root = input_root + "_cropW" 
 
     if flag == "train":
         img_dir = "imagesTr"
@@ -183,12 +192,12 @@ def cropW_3d_images_WORD(flag ="train"):
             scri_name = img_name
             cropW_single_image(scri_name, input_scri_dir, idx_min, idx_max, output_scri_dir)
 
-    df = pd.DataFrame.from_dict(crop_location_d)
-    df.to_csv("./log/" + flag + "_crop_location.csv")
+    # df = pd.DataFrame.from_dict(crop_location_d)
+    # df.to_csv("./log/" + flag + "_crop_location.csv")
 
-def cropWL_3d_images_dealLabel_WORD(flag="train"):
-    input_root = data_root
-    output_root = data_root + "_cropWL" 
+def cropWL_3d_images_dealLabel_WORD(input_root, output_root, flag="train"):
+    # input_root = data_root
+    # output_root = data_root + "_cropWL" 
 
     if flag == "train":
         img_dir = "imagesTr"
@@ -239,10 +248,11 @@ def cropWL_3d_images_dealLabel_WORD(flag="train"):
         #crop the scribble
         if flag =="train":
             scri_name = img_name
+            print("crop scribble", scri_name)
             cropW_single_image(scri_name, input_scri_dir, idx_min, idx_max, output_scri_dir, convert = True)
 
-    df = pd.DataFrame.from_dict(crop_location_d)
-    df.to_csv("./log/WORD/" + flag + "_cropWL_location.csv")
+    # df = pd.DataFrame.from_dict(crop_location_d)
+    # df.to_csv("./log/WORD/" + flag + "_cropWL_location.csv")
 
 def deal_trainSet_to_slices():#for 2d
     input_root = data_root + "_cropWL"
@@ -502,15 +512,19 @@ def deal_scribblePerN_to_volumes(flag):#flag: Per1, Per3... 默认是train
 
 
 if __name__ == "__main__":
-    func = 1
+    input_root = "/home/disk16t/data/Abdomen/WORD-V0.1.0-Admin"
+    output_root = "./data/Word_cropWL"
+
+
+    func = 5
     flag1 = "Per5" # train, test, valid, ..., Per1, Per3,...
 
     if func == 1:
         show_images_info(flag = "train")
-    elif func == 2:#使用full label
-        cropW_3d_images_WORD(flag = "train")
-        cropW_3d_images_WORD(flag = "test")
-        cropW_3d_images_WORD(flag = "valid")
+    elif func == 2:# 使用full label
+        cropW_3d_images_WORD(input_root, output_root, flag = "train")
+        cropW_3d_images_WORD(input_root, output_root, flag = "test")
+        cropW_3d_images_WORD(input_root, output_root, flag = "valid")
     elif func == 3:
         deal_trainSet_to_slices() # before train_slices = 17554
         # 进行label convert后就只有Total 9223 training slices
@@ -518,9 +532,9 @@ if __name__ == "__main__":
         deal_dataSet_to_volumes(flag = "valid") # 20 validation volumes
         deal_dataSet_to_volumes(flag = "test") #30 test volumes
     elif func == 5: #挑了7个器官
-        cropWL_3d_images_dealLabel_WORD(flag = "train")
-        cropWL_3d_images_dealLabel_WORD(flag = "test")
-        cropWL_3d_images_dealLabel_WORD(flag = "valid")
+        cropWL_3d_images_dealLabel_WORD(input_root, output_root, flag = "train")
+        # cropWL_3d_images_dealLabel_WORD(input_root, output_root, flag = "test")
+        # cropWL_3d_images_dealLabel_WORD(input_root, output_root, flag = "valid")
     elif func == 6: #为了3d做的数据处理，为此还更改了deal_dataSet_to_volumes这个代码
         deal_dataSet_to_volumes(flag = "train")
         # deal_dataSet_to_volumes(flag = "test")

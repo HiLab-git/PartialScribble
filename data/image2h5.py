@@ -23,12 +23,12 @@ def save_h5(image_path, label_path, scribble_path, save_path):
             scribble = sitk.GetArrayFromImage(scr_itk).astype(np.uint8)
             f.create_dataset('scribble', data=scribble, compression="gzip")
 
-def process_dataset(root_path, mode="Tr"):
+def process_dataset(root_path, mode="Tr", output_dir = None):
     img_dir = os.path.join(root_path, f"images{mode}")
     lab_dir = os.path.join(root_path, f"labels{mode}")
     scr_dir = os.path.join(root_path, f"scribbles{mode}") if mode == "Tr" else None
     
-    output_dir = os.path.join(root_path, f"h5_{mode}")
+    # output_dir = os.path.join(root_path, f"h5_{mode}")
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
     
@@ -50,10 +50,10 @@ def process_dataset(root_path, mode="Tr"):
 
 if __name__ == "__main__":
     # Define your root directory
-    base_path = "/home/data/sxl/PS-Seg/data/Word/WORD-V0.1.0-Admin_cropWL"
+    base_path = "./data/Word_cropWL"
     
     # Process Training set (image, label, scribble)
-    process_dataset(base_path, mode="Tr", output_dir = "/home/data/sxl/PS-Seg/data/Word/Word_3d/Abdomen_Tr_volumes")
+    process_dataset(base_path, mode="Tr", output_dir = base_path+ "_h5/Abdomen_Tr_volumes")
     
     # Process Validation set (image, label)
-    process_dataset(base_path, mode="Val", output_dir = "/home/data/sxl/PS-Seg/data/Word/Word_3d/Abdomen_Val_volumes")
+    process_dataset(base_path, mode="Val", output_dir = base_path+ "_h5/Abdomen_Val_volumes")

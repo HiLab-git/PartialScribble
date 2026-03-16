@@ -70,7 +70,13 @@ Obtain predictions for testing images:
 python run.py test config/psseg_word.cfg
 ```
 
-### Step 3: Compare with other weakly supervised segmentation methods
+### Step 3: Evaluation
+Get quantitative evaluation results by:
+```
+pymic_eval_seg --metric dice --cls_num 8 --gt_dir ./data/Word_cropWL/labelsTs --seg_dir result/word_psseg
+```
+
+### Step 4: Compare with other weakly supervised segmentation methods
 PyMIC also provides implementation of several other weakly supervised methods (learning from scribbles). Please see [PyMIC_examples/seg_weak_sup/ACDC][PyMIC_example_link] for examples.
 
 [PyMIC_example_link]:https://github.com/HiLab-git/PyMIC_examples/tree/main/seg_weak_sup/ACDC 

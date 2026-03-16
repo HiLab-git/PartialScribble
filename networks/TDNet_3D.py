@@ -202,7 +202,7 @@ class TDNet_3D(nn.Module): # m means using conv1x1,Sk means using same kernel
         n_classes = params['class_num']
         feature_scale = params.get('feature_scale', 4)
         is_batchnorm = params.get('is_batchnorm', True)
-        same_kernel_size = params.get('same_kernel_size', 1)
+        dilation     = params.get('dilation', [1,1,1])
         is_sameInit = params.get('is_sameInit', False)
         is_decoderRandomDropout = params.get('is_decoderRandomDropout', True)
         is_deepSupervision = params.get('is_deepSupervision', True)
@@ -213,24 +213,24 @@ class TDNet_3D(nn.Module): # m means using conv1x1,Sk means using same kernel
                     'dropout': [0.05, 0.1, 0.2, 0.3, 0.5],
                     'is_batchnorm': is_batchnorm,
                     'init_type': 'kaiming', #select mode: kaiming, xavier, normal, orthogonal
-                    'padding_size': same_kernel_size, 
-                    'dilation': same_kernel_size} 
+                    'padding_size': dilation[0], 
+                    'dilation':     dilation[0]} 
         params_deaux1 = {  'in_chns': in_channels,
                     'class_num': n_classes,
                     'feature_scale': feature_scale, 
                     'dropout': [0.05, 0.1, 0.2, 0.3, 0.5],
                     'is_batchnorm': is_batchnorm,
                     'init_type': 'xavier', 
-                    'padding_size':same_kernel_size, 
-                    'dilation':same_kernel_size} 
+                    'padding_size':dilation[1], 
+                    'dilation':    dilation[1]} 
         params_deaux2 = {  'in_chns': in_channels,
                     'class_num': n_classes,
                     'feature_scale': feature_scale, 
                     'dropout': [0.05, 0.1, 0.2, 0.3, 0.5],
                     'is_batchnorm': is_batchnorm,
                     'init_type': 'normal', 
-                    'padding_size':same_kernel_size, 
-                    'dilation':same_kernel_size}  
+                    'padding_size':dilation[2], 
+                    'dilation':    dilation[2]}  
         if is_sameInit:
             params_deaux1['init_type'] = 'kaiming'
             params_deaux2['init_type'] = 'kaiming'

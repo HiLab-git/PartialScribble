@@ -253,22 +253,26 @@ def scrible_2d_PerNSclices(label, interNum, iteration=[4, 10]):
         if np.sum(lab[i]) == 0:
             continue
         struct = ndimage.generate_binary_structure(2, 2)
-        if np.sum(lab[i]) > 900 and iteration != 0 and iteration != [0] and iteration != None:
-            iter_num = math.ceil(
-                iteration[0]+random.random() * (iteration[1]-iteration[0]))
-            slic = ndimage.morphology.binary_erosion(
-                lab[i], structure=struct, iterations=iter_num)
-        else:
-            slic = lab[i]
+        slic = lab[i]
+        # if np.sum(lab[i]) > 900 and iteration != 0 and iteration != [0] and iteration != None:
+        #     iter_num = math.ceil(
+        #         iteration[0]+random.random() * (iteration[1]-iteration[0]))
+        #     slic = ndimage.morphology.binary_erosion(
+        #         lab[i], structure=struct, iterations=iter_num)
+            
         sk_slice = skeletonize(slic, method='lee')
-        sk_slice = np.asarray((sk_slice == 255), dtype=np.int32)
+        # sk_slice = np.asarray((sk_slice == 255), dtype=np.int32)
+        sk_slice = np.asarray(sk_slice, dtype=np.int32)
         skeleton_map[i] = sk_slice
     return skeleton_map
 
 
 def scribble4class_PerNSclices(label, class_id, class_num, interNum, iteration=[4, 10], cut_branch=True):
     label = (label == class_id)
+    print("class", class_id)
+    print("volume of label", np.sum(label))
     sk_map = scrible_2d_PerNSclices(label, interNum, iteration=iteration)
+    print("scribble number", np.sum(sk_map))
     if cut_branch and class_id != 0:
         cut = Cutting_branch()
         for i in range(sk_map.shape[0]):
@@ -280,24 +284,26 @@ def scribble4class_PerNSclices(label, class_id, class_num, interNum, iteration=[
         class_id = class_num
     return sk_map * class_id
 
-def generate_scribble_PerNSclices(label, interNum, iterations, cut_branch=True):
+def generate_scribble_PerNSclices(label, interNum, iterations = None, cut_branch=True):
     class_num = np.max(label) + 1
     output = np.zeros_like(label, dtype=np.uint8)
     for i in range(class_num): 
-        it = iterations[i] if isinstance(iterations, list) else iterations
+        # it = iterations[i] if isinstance(iterations, list) else iterations
         scribble = scribble4class_PerNSclices(
-            label, i, class_num, interNum, it, cut_branch=cut_branch)
+            label, i, class_num, interNum, cut_branch=cut_branch)
         output += scribble.astype(np.uint8)
     return output
 
 
 
 if __name__ == "__main__":
-    interval_layer = 0
+    N = 5
     ##############
     num = 0
-    data_lab_path = "/home/data/sxl/PS-Seg/data/Word/WORD-V0.1.0-Admin_cropWL/labelsTr"
-    os.makedirs(data_lab_path.replace("label", "scribble"), exist_ok=True)
+    data_lab_path = "./data/Word_cropWL/labelsTr"
+    data_scb_path = "./data/Word_cropWL/scribblesTr_p{0:}".format(N)
+    # data_lab_path = "/home/data/sxl/PS-Seg/data/Word/WORD-V0.1.0-Admin_cropWL/labelsTr"
+    os.makedirs(data_scb_path, exist_ok=True)
 
     for i in sorted(glob.glob(data_lab_path + "/*.nii.gz")):
         print("{} Begin".format(i.split("/")[-1]))
@@ -305,7 +311,7 @@ if __name__ == "__main__":
         label = sitk.GetArrayFromImage(itk_data)
         print("label:{}".format(np.unique(label)))
         num_classes = 8
-        output = generate_scribble_PerNSclices(label, interval_layer+1, tuple([1, num_classes-1]))
+        output = generate_scribble_PerNSclices(label, N) #, tuple([1, num_classes-1]))
         print("output:{}".format(np.unique(output)))
         output[output == 0] = 255 # ignore index
         output[output == num_classes] = 0
@@ -315,7 +321,8 @@ if __name__ == "__main__":
         itk_scr = sitk.GetImageFromArray(output)
         itk_scr.CopyInformation(itk_data)
         
-        sitk.WriteImage(itk_scr, i.replace("label", "scribble"))
+        output_name = data_scb_path + "/" + i.split("/")[-1]
+        sitk.WriteImage(itk_scr, output_name)
         print("{} End".format(i.split("/")[-1]))
         print(num) #368
         num += 1
