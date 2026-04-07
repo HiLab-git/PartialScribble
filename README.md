@@ -84,7 +84,7 @@ PyMIC also provides implementation of several other weakly supervised methods (l
 [PyMIC_example_link]:https://github.com/HiLab-git/PyMIC_examples/tree/main/seg_weak_sup/ACDC 
 
 ### Run PS-Seg with 2D networks
-Here we also provide an expample for using 2D networks combined with PS-seg on the WORD dataset. Note that we lead a 3D patch with shape of 16x256x256, but treat it as 16 2D images with a shape of 256x256, and use 2D networks for segmentation.  Use the following scripts for training and inference. 
+Here we also provide an expample for using 2D networks combined with PS-seg on the WORD dataset. Note that we extract a 3D patch with shape of 16x256x256, but treat it as 16 2D images with a shape of 256x256, and use 2D networks for segmentation.  Use the following scripts for training and inference. 
 
 ```
 pymic_train config/psseg_word_2d.cfg
